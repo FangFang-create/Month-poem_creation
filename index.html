@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Story 2026 - Monthly Visual Poem</title>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400..900;1,400..900&family=Damion&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', 'Helvetica Neue', sans-serif;
+    background: #000;
+    display: flex; justify-content: center; align-items: center; min-height: 100vh;
+  }
+  .phone-frame {
+    width: 390px; height: 844px; background: #000;
+    border-radius: 44px; overflow: hidden;
+    box-shadow: 0 0 0 2px #1a1a1a, 0 20px 60px rgba(0,0,0,0.3), 0 0 0 14px #2a2a2a;
+    position: relative;
+  }
+
+  /* Slide-up page transition */
+  .slide-page {
+    position: absolute; inset: 0; background: #000;
+    transform: translateY(100%);
+    transition: transform 0.45s cubic-bezier(0.32, 0.72, 0, 1);
+    z-index: 10;
+  }
+  .slide-page.active { transform: translateY(0); }
+  .page-recap { z-index: 20; }
+
+  /* ===== Page 1: Inbox ===== */
+  .page-inbox { position: absolute; inset: 0; }
+  .page-inbox .bg-image { width: 100%; height: 100%; object-fit: fill; display: block; }
+  .story-overlay { position: absolute; width: 100px; height: 105px; }
+  .story-overlay.create { left: 5px; top: 105px; cursor: pointer; }
+  .story-overlay.fang   { left: 205px; top: 105px; }
+  .story-overlay .avatar-wrapper { position: absolute; left: 11px; top: 0; width: 78px; height: 78px; }
+  .story-overlay .avatar-wrapper img.avatar { width: 78px; height: 78px; border-radius: 50%; object-fit: cover; display: block; }
+  .story-overlay .avatar-wrapper .ring { position: absolute; top: -7px; left: -7px; width: 92px; height: 92px; }
+  .story-overlay .avatar-wrapper .plus-icon { position: absolute; bottom: -2px; right: 2px; width: 22px; height: 22px; }
+  .story-overlay .name { position: absolute; top: 90px; left: 4px; width: 92px; height: 15px; font-size: 12px; font-weight: 500; color: #000; text-align: center; letter-spacing: 0.16px; line-height: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* ===== Page 2: Story Album ===== */
+  .page-story .bg-image { position: absolute; left: 0; top: 0; width: 390px; height: 844px; object-fit: fill; display: block; }
+  .story-nav {
+    position: absolute; top: 47px; left: 0; width: 390px; height: 44px;
+    background: #000; display: flex; align-items: center; justify-content: center; z-index: 2;
+  }
+  .story-nav .close-btn {
+    position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+    width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    background: none; border: none; padding: 0;
+  }
+  .story-nav .close-btn svg { width: 24px; height: 24px; }
+  .story-nav .title { font-size: 17px; font-weight: 700; color: #fff; line-height: 1.3; }
+  .story-nav .calendar-btn {
+    position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+    width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
+  }
+  .story-nav .calendar-btn svg { width: 21px; height: 20px; }
+
+  /* Recap entry card on Story Album */
+  .recap-card {
+    position: absolute; left: 232px; top: 103px; width: 102px; height: 86px;
+    background: rgba(51,51,51,0.6); border: 1px solid rgba(51,51,51,0.6);
+    border-radius: 14px; z-index: 2; display: flex; flex-direction: column;
+    align-items: center; overflow: hidden; cursor: pointer;
+  }
+  .recap-card .photos { position: relative; width: 58px; height: 38px; margin-top: 10px; }
+  .recap-card .polaroid { position: absolute; background: #f5f5f5; border-radius: 1.3px; }
+  .recap-card .polaroid img { border-radius: 1px; object-fit: cover; display: block; }
+  .recap-card .polaroid-3 { width: 21.5px; height: 26px; right: 0; top: 5px; transform: rotate(-10deg); }
+  .recap-card .polaroid-3 img { width: 19.9px; height: 19.9px; margin: 1px; }
+  .recap-card .polaroid-2 { width: 21.5px; height: 26px; left: 0; top: 5px; transform: rotate(10deg); }
+  .recap-card .polaroid-2 img { width: 19.9px; height: 19.9px; margin: 1px; }
+  .recap-card .polaroid-1 { width: 27.2px; height: 32.8px; left: 50%; top: 4px; transform: translateX(-50%) rotate(11.5deg); z-index: 1; }
+  .recap-card .polaroid-1 img { width: 25.2px; height: 25.2px; margin: 1.1px; }
+  .recap-card .label { position: absolute; top: 54px; left: 0; width: 102px; font-size: 12px; font-weight: 400; color: #fff; text-align: center; letter-spacing: 0.16px; line-height: 1.3; }
+
+  /* Recap card guide animation */
+  @keyframes fanLeft { 0%{transform:rotate(10deg) translate(0,0);filter:brightness(1)}15%{transform:rotate(14deg) translate(2px,1px);filter:brightness(1)}30%{transform:rotate(24deg) translate(-6px,-2px);filter:brightness(1.15)}45%{transform:rotate(22deg) translate(-5px,-1px);filter:brightness(1.25)}60%{transform:rotate(20deg) translate(-4px,-1px);filter:brightness(1.1)}75%{transform:rotate(14deg) translate(-1px,0);filter:brightness(1)}100%{transform:rotate(10deg) translate(0,0);filter:brightness(1)} }
+  @keyframes fanRight { 0%{transform:rotate(-10deg) translate(0,0);filter:brightness(1)}15%{transform:rotate(-14deg) translate(-2px,1px);filter:brightness(1)}30%{transform:rotate(-24deg) translate(6px,-2px);filter:brightness(1.15)}45%{transform:rotate(-22deg) translate(5px,-1px);filter:brightness(1.25)}60%{transform:rotate(-20deg) translate(4px,-1px);filter:brightness(1.1)}75%{transform:rotate(-14deg) translate(1px,0);filter:brightness(1)}100%{transform:rotate(-10deg) translate(0,0);filter:brightness(1)} }
+  @keyframes liftCenter { 0%{transform:translateX(-50%) rotate(11.5deg) scale(1);filter:brightness(1)}15%{transform:translateX(-50%) rotate(8deg) scale(0.95);filter:brightness(1)}30%{transform:translateX(-50%) rotate(-4deg) scale(1.08);filter:brightness(1.15)}45%{transform:translateX(-50%) rotate(2deg) scale(1.1);filter:brightness(1.3)}60%{transform:translateX(-50%) rotate(-2deg) scale(1.06);filter:brightness(1.1)}75%{transform:translateX(-50%) rotate(8deg) scale(1.02);filter:brightness(1)}100%{transform:translateX(-50%) rotate(11.5deg) scale(1);filter:brightness(1)} }
+  @keyframes photosGlow { 0%{filter:drop-shadow(0 0 0 rgba(255,255,255,0))}25%{filter:drop-shadow(0 0 0 rgba(255,255,255,0))}40%{filter:drop-shadow(0 0 6px rgba(255,255,255,0.5))}50%{filter:drop-shadow(0 0 8px rgba(255,255,255,0.6))}60%{filter:drop-shadow(0 0 4px rgba(255,255,255,0.3))}75%{filter:drop-shadow(0 0 0 rgba(255,255,255,0))}100%{filter:drop-shadow(0 0 0 rgba(255,255,255,0))} }
+  .recap-card.animating .photos { animation: photosGlow 7s cubic-bezier(0.4,0,0.2,1); }
+  .recap-card.animating .polaroid-2 { animation: fanLeft 7s cubic-bezier(0.4,0,0.2,1); }
+  .recap-card.animating .polaroid-3 { animation: fanRight 7s cubic-bezier(0.4,0,0.2,1); }
+  .recap-card.animating .polaroid-1 { animation: liftCenter 7s cubic-bezier(0.4,0,0.2,1); }
+
+  /* ===== Page 3: Recap (single page, two card states) ===== */
+  .preview-nav {
+    position: absolute; top: 47px; left: 0; width: 390px; height: 44px;
+    display: flex; align-items: center; justify-content: center; z-index: 5;
+  }
+  .preview-nav .nav-back {
+    position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+    width: 24px; height: 24px; cursor: pointer; background: none; border: none; padding: 0;
+  }
+  .preview-nav .nav-back img { width: 24px; height: 24px; }
+  .preview-nav .nav-pill {
+    background: rgba(255,255,255,0.2); border-radius: 100px;
+    padding: 6px 14px; font-size: 16px; font-weight: 500; color: #f6f6f6;
+    letter-spacing: 0.03px; line-height: 1.3;
+  }
+  .preview-nav .nav-right {
+    position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+    display: flex; align-items: center;
+  }
+  .preview-nav .nav-right .nav-icon { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
+  .preview-nav .nav-right .nav-icon img { width: 24px; height: 24px; }
+
+  .action-bar {
+    position: absolute; bottom: 34px; left: 0; width: 390px; height: 99px;
+    display: flex; align-items: center; justify-content: center; gap: 42px; z-index: 5;
+  }
+  .action-item { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 48px; }
+  .action-item img { width: 48px; height: 48px; }
+  .action-item span { font-size: 11px; font-weight: 500; color: #fff; text-align: center; text-shadow: 0 0.8px 1px rgba(0,0,0,0.2), 0 1px 4px rgba(0,0,0,0.15); letter-spacing: 0.2px; }
+  .action-post { width: 76px; height: 76px; background: #fff; border-radius: 60px; display: flex; align-items: center; justify-content: center; }
+  .action-post img { width: 40px; height: 40px; }
+
+  /* Content card container */
+  .recap-content-card {
+    position: absolute; top: 116px; left: 50%; transform: translateX(-50%);
+    width: 318px; height: 560px; border-radius: 24px; overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.2); z-index: 2;
+  }
+
+  /* Two layers inside the card: loading & result */
+  .card-state {
+    position: absolute; inset: 0;
+    transition: opacity 0.8s ease-in-out;
+  }
+  .card-state .card-bg {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; border-radius: 24px;
+  }
+  .card-loading { opacity: 1; z-index: 1; }
+  .card-result  { opacity: 0; z-index: 2; pointer-events: none; }
+
+  /* When result is active, crossfade */
+  .page-recap.show-result .card-loading { opacity: 0; }
+  .page-recap.show-result .card-result  { opacity: 1; pointer-events: auto; }
+
+  /* === Loading state (State A) === */
+  .loading-title {
+    position: absolute; top: 44px; left: 40px;
+    font-family: 'Schibsted Grotesk', sans-serif; font-weight: 900; font-style: italic;
+    font-size: 21.2px; color: #000; letter-spacing: 0.5px; line-height: 35px;
+    white-space: nowrap; z-index: 2;
+  }
+  .loading-subtitle {
+    position: absolute; top: 85px; left: 62px; width: 194px;
+    font-family: 'Damion', cursive; font-size: 19.569px; color: #000;
+    line-height: 1.2; text-align: center; z-index: 2;
+  }
+  .typewriter-cursor {
+    display: inline-block; width: 2px; height: 1em;
+    background: #000; margin-left: 2px;
+    animation: blink 0.7s step-end infinite;
+    vertical-align: text-bottom;
+  }
+  @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+
+  .recap-polaroid {
+    position: absolute; z-index: 3; border-radius: 5px; overflow: hidden;
+    box-shadow: 0.4px 3.3px 1px rgba(0,0,0,0), 0.4px 2px 0.8px rgba(0,0,0,0.01),
+                0.2px 1.2px 0.8px rgba(0,0,0,0.05), 0 0.6px 0.6px rgba(0,0,0,0.09),
+                0 0.2px 0.2px rgba(0,0,0,0.1);
+  }
+  .recap-polaroid .polaroid-inner {
+    width: 100%; height: 100%; display: flex; flex-direction: column;
+    background-size: 12px 7px, auto; background-position: top left;
+    background-repeat: repeat, no-repeat; padding: 7px; padding-bottom: 9px; gap: 7px;
+  }
+  .recap-polaroid .polaroid-inner .photo-frame { flex: 1; border-radius: 2px; overflow: hidden; position: relative; }
+  .recap-polaroid .polaroid-inner .photo-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .recap-polaroid .polaroid-inner .photo-frame::after { content: ''; position: absolute; inset: 0; box-shadow: inset 0 0.3px 2px rgba(0,0,0,0.25); }
+  .recap-polaroid .polaroid-date { font-family: 'Damion', cursive; font-size: 11.5px; color: #000; opacity: 0.7; text-align: center; line-height: 1.3; mix-blend-mode: darken; }
+
+  .recap-polaroid.p-center { width: 146px; height: 170px; left: 50%; top: 171px; transform: translateX(-50%) rotate(-2.91deg); }
+  .recap-polaroid.p-left   { width: 132px; height: 154px; left: 23px; top: 284px; transform: rotate(5.96deg); }
+  .recap-polaroid.p-right  { width: 127px; height: 148px; right: 23px; top: 308px; transform: rotate(-8.29deg); }
+
+  /* Polaroid entrance */
+  @keyframes polaroidEnterCenter { 0%{opacity:0;transform:translateX(-50%) rotate(-2.91deg) scale(0.3) translateY(60px)}60%{opacity:1;transform:translateX(-50%) rotate(-2.91deg) scale(1.05) translateY(-5px)}100%{opacity:1;transform:translateX(-50%) rotate(-2.91deg) scale(1) translateY(0)} }
+  @keyframes polaroidEnterLeft { 0%{opacity:0;transform:rotate(5.96deg) scale(0.3) translateX(40px) translateY(40px)}60%{opacity:1;transform:rotate(5.96deg) scale(1.05) translateX(-3px) translateY(-3px)}100%{opacity:1;transform:rotate(5.96deg) scale(1) translateX(0) translateY(0)} }
+  @keyframes polaroidEnterRight { 0%{opacity:0;transform:rotate(-8.29deg) scale(0.3) translateX(-40px) translateY(40px)}60%{opacity:1;transform:rotate(-8.29deg) scale(1.05) translateX(3px) translateY(-3px)}100%{opacity:1;transform:rotate(-8.29deg) scale(1) translateX(0) translateY(0)} }
+
+  .page-recap.active .recap-polaroid.p-center { animation: polaroidEnterCenter 0.8s cubic-bezier(0.34,1.56,0.64,1) 0.3s both; }
+  .page-recap.active .recap-polaroid.p-left   { animation: polaroidEnterLeft 0.8s cubic-bezier(0.34,1.56,0.64,1) 0.6s both; }
+  .page-recap.active .recap-polaroid.p-right  { animation: polaroidEnterRight 0.8s cubic-bezier(0.34,1.56,0.64,1) 0.9s both; }
+
+  /* === Result state (State B) === */
+  .result-header {
+    position: absolute; top: 50px; left: 19px;
+    display: flex; align-items: center; gap: 6.5px; z-index: 2;
+  }
+  .result-header .result-title {
+    font-family: 'Schibsted Grotesk', sans-serif; font-weight: 700; font-style: italic;
+    font-size: 13px; color: #000; line-height: 35px; white-space: nowrap;
+  }
+  .result-header .result-arrow { width: 18px; height: 18px; transform: rotate(180deg); }
+  .result-header .result-arrow img { width: 100%; height: 100%; }
+
+  .result-headline {
+    position: absolute; top: 86px; left: 19px; width: 279px;
+    font-weight: 700; font-size: 29.354px; color: #000;
+    line-height: 32.6px; letter-spacing: -0.42px; z-index: 2;
+  }
+
+  .result-sticker1 { position: absolute; width: 241px; height: 241px; left: 46px; top: 90px; z-index: 3; transform: rotate(-11.67deg); }
+  .result-sticker1 img { width: 100%; height: 100%; object-fit: cover; }
+
+  .result-emoji-kiss { position: absolute; width: 59px; height: 57px; left: 20px; top: 163px; z-index: 4; transform: rotate(-14.82deg); }
+  .result-emoji-kiss img { width: 100%; height: 100%; object-fit: cover; }
+
+  .result-poem {
+    position: absolute; left: 19px; top: 344px; width: 149px;
+    font-family: 'Damion', cursive; font-size: 21.2px; color: #000;
+    line-height: 22.5px; letter-spacing: -0.42px; z-index: 4;
+  }
+
+  .result-small-photo {
+    position: absolute; width: 73px; height: 86px; left: 178px; top: 336px; z-index: 3;
+    transform: rotate(7.29deg); border-radius: 3px; overflow: hidden;
+    box-shadow: 0.2px 1.8px 0.6px rgba(0,0,0,0), 0.2px 1.1px 0.5px rgba(0,0,0,0.01),
+                0.1px 0.7px 0.5px rgba(0,0,0,0.05), 0 0.3px 0.3px rgba(0,0,0,0.09);
+  }
+  .result-small-photo .sp-inner { width: 100%; height: 100%; display: flex; flex-direction: column; padding: 4px; padding-bottom: 5px; gap: 4px; background: #fff; }
+  .result-small-photo .sp-frame { flex: 1; overflow: hidden; position: relative; }
+  .result-small-photo .sp-frame img { width: 100%; height: 100%; object-fit: cover; }
+  .result-small-photo .sp-frame::after { content: ''; position: absolute; inset: 0; box-shadow: inset 0 0.1px 0.5px rgba(0,0,0,0.25); }
+  .result-small-photo .sp-date { font-family: 'Damion', cursive; font-size: 6.5px; color: #000; opacity: 0.7; text-align: center; mix-blend-mode: darken; }
+
+  .result-emoji-wave { position: absolute; width: 67px; height: 58px; left: 236px; top: 374px; z-index: 4; transform: rotate(-4.17deg); }
+  .result-emoji-wave img { width: 100%; height: 100%; object-fit: cover; }
+
+  .result-text2 {
+    position: absolute; left: 19px; top: 450px; width: 279px;
+    font-weight: 700; font-size: 16.3px; color: #000;
+    line-height: 24px; letter-spacing: -0.45px; z-index: 4;
+  }
+
+  .result-sticker-leaf { position: absolute; width: 46px; height: 46px; left: 81px; top: 475px; z-index: 5; transform: rotate(-16.75deg); }
+  .result-sticker-leaf img { width: 100%; height: 100%; object-fit: cover; }
+  .result-leaf-small { position: absolute; width: 11px; height: 26px; left: 106px; top: 475px; z-index: 5; transform: rotate(-16.75deg); }
+  .result-leaf-small img { width: 100%; height: 100%; }
+
+  /* Gentle float animations for result state */
+  @keyframes gf1 { 0%,100%{transform:rotate(-11.67deg) translateY(0)}50%{transform:rotate(-9deg) translateY(-3px)} }
+  @keyframes gf2 { 0%,100%{transform:rotate(-14.82deg)}50%{transform:rotate(-10deg) translateX(2px) translateY(-2px)} }
+  @keyframes gf3 { 0%,100%{transform:rotate(7.29deg)}50%{transform:rotate(10deg) translateY(-2px)} }
+  @keyframes gf4 { 0%,100%{transform:rotate(-4.17deg)}50%{transform:rotate(0deg) translateY(-3px)} }
+  @keyframes gf5 { 0%,100%{transform:rotate(-16.75deg)}50%{transform:rotate(-12deg) translateY(-2px)} }
+
+  .page-recap.show-result .result-sticker1     { animation: gf1 4s ease-in-out infinite; }
+  .page-recap.show-result .result-emoji-kiss    { animation: gf2 3.5s ease-in-out infinite 0.3s; }
+  .page-recap.show-result .result-small-photo   { animation: gf3 4.5s ease-in-out infinite 0.5s; }
+  .page-recap.show-result .result-emoji-wave    { animation: gf4 3.8s ease-in-out infinite 0.7s; }
+  .page-recap.show-result .result-sticker-leaf  { animation: gf5 4.2s ease-in-out infinite 0.2s; }
+
+  /* Status bar */
+  .status-bar-img {
+    position: absolute; top: 0; left: 0; width: 390px; height: 47px;
+    z-index: 6; object-fit: cover;
+  }
+
+  /* Your Story avatar */
+  .story-avatar-btn {
+    position: relative; width: 48px; height: 48px;
+  }
+  .story-avatar-btn .av-photo {
+    width: 40px; height: 40px; border-radius: 50%; object-fit: cover;
+    position: absolute; top: 4px; left: 4px;
+  }
+  .story-avatar-btn .av-base {
+    position: absolute; top: 4px; left: 4px; width: 40px; height: 40px;
+  }
+  .story-avatar-btn .av-ring {
+    position: absolute; top: -1px; left: -1px; width: 50px; height: 50px;
+  }
+
+  /* Home indicator */
+  .home-indicator {
+    position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+    width: 140px; height: 5px; border-radius: 999px; z-index: 6;
+    background: rgba(255,255,255,0.7);
+  }
+</style>
+</head>
+<body>
+
+<div class="phone-frame">
+
+  <!-- ===== Page 1: Inbox ===== -->
+  <div class="page-inbox">
+    <img class="bg-image" src="design.png" alt="Inbox Design">
+    <div class="story-overlay create" onclick="openStory()">
+      <div class="avatar-wrapper">
+        <img class="avatar" src="assets/create-avatar.png" alt="Create">
+        <img class="ring" src="assets/avatar-ring.svg" alt="">
+        <img class="plus-icon" src="assets/create-plus.svg" alt="">
+      </div>
+      <span class="name">Create</span>
+    </div>
+    <div class="story-overlay fang">
+      <div class="avatar-wrapper">
+        <img class="avatar" src="assets/fang-avatar.png" alt="Fang">
+        <img class="ring" src="assets/avatar-ring.svg" alt="">
+      </div>
+      <span class="name">Fang</span>
+    </div>
+  </div>
+
+  <!-- ===== Page 2: Story Album ===== -->
+  <div class="page-story slide-page" id="pageStory">
+    <img class="bg-image" src="assets/story-bg.png" alt="Story Album" style="position:absolute;left:0;top:0;width:390px;height:844px;object-fit:fill;display:block;">
+    <div class="story-nav">
+      <button class="close-btn" onclick="closeStory()">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M17.4395 5.14663C17.6348 4.95142 17.9513 4.95138 18.1466 5.14663L18.8536 5.85366C19.0487 6.04891 19.0488 6.36546 18.8536 6.56069L13.4141 12.0001L18.8536 17.4396C19.0487 17.6349 19.0488 17.9514 18.8536 18.1466L18.1466 18.8537C17.9514 19.0489 17.6348 19.0487 17.4395 18.8537L12.0001 13.4142L6.56062 18.8537C6.3654 19.0489 6.04886 19.0488 5.85359 18.8537L5.14656 18.1466C4.95131 17.9514 4.95132 17.6349 5.14656 17.4396L10.586 12.0001L5.14656 6.56069C4.9513 6.36543 4.9513 6.04892 5.14656 5.85366L5.85359 5.14663C6.04885 4.95136 6.36536 4.95136 6.56062 5.14663L12.0001 10.5861L17.4395 5.14663Z" fill="white"/></svg>
+      </button>
+      <span class="title">Add to story</span>
+      <div class="calendar-btn">
+        <svg viewBox="0 0 21 20" fill="none"><path d="M6 0C5.72386 0 5.5 0.223858 5.5 0.5V2H4.8C3.11984 2 2.27976 2 1.63803 2.32698C1.07354 2.6146 0.614601 3.07354 0.32698 3.63803C0 4.27976 0 5.11984 0 6.8V15.2C0 16.8802 0 17.7202 0.32698 18.362C0.614601 18.9265 1.07354 19.3854 1.63803 19.673C2.27976 20 3.11984 20 4.8 20H16.2C17.8802 20 18.7202 20 19.362 19.673C19.9265 19.3854 20.3854 18.9265 20.673 18.362C21 17.7202 21 16.8802 21 15.2V6.8C21 5.11984 21 4.27976 20.673 3.63803C20.3854 3.07354 19.9265 2.6146 19.362 2.32698C18.7202 2 17.8802 2 16.2 2H15.5V0.5C15.5 0.223858 15.2761 0 15 0H14C13.7239 0 13.5 0.223858 13.5 0.5V2H7.5V0.5C7.5 0.223858 7.27614 0 7 0H6ZM4.8 4H5.5V5.5C5.5 5.77614 5.72386 6 6 6H7C7.27614 6 7.5 5.77614 7.5 5.5V4H13.5V5.5C13.5 5.77614 13.7239 6 14 6H15C15.2761 6 15.5 5.77614 15.5 5.5V4H16.2C17.0731 4 17.6076 4.00156 18.0075 4.03423C18.1938 4.04945 18.3065 4.06857 18.375 4.08469C18.4076 4.09236 18.4276 4.09879 18.4384 4.10265C18.4488 4.10636 18.454 4.10899 18.454 4.10899C18.6422 4.20487 18.7951 4.35785 18.891 4.54601C18.891 4.54601 18.8936 4.55118 18.8973 4.56158C18.9012 4.57241 18.9076 4.59244 18.9153 4.625C18.9314 4.69345 18.9505 4.80617 18.9658 4.99247C18.9984 5.39239 19 5.92692 19 6.8V7.75H2V6.8C2 5.92692 2.00156 5.39239 2.03423 4.99247C2.04945 4.80617 2.06857 4.69345 2.08469 4.625C2.09236 4.59244 2.09879 4.57241 2.10265 4.56158C2.10636 4.55118 2.10899 4.54601 2.10899 4.54601C2.20487 4.35785 2.35785 4.20487 2.54601 4.10899C2.54601 4.10899 2.55118 4.10636 2.56158 4.10265C2.57241 4.09879 2.59244 4.09236 2.625 4.08469C2.69345 4.06857 2.80617 4.04945 2.99247 4.03423C3.39239 4.00156 3.92692 4 4.8 4ZM2 9.75H19V15.2C19 16.0731 18.9984 16.6076 18.9658 17.0075C18.9505 17.1938 18.9314 17.3065 18.9153 17.375C18.9076 17.4076 18.9012 17.4276 18.8973 17.4384C18.8936 17.4488 18.891 17.454 18.891 17.454C18.7951 17.6422 18.6422 17.7951 18.454 17.891C18.454 17.891 18.4488 17.8936 18.4384 17.8973C18.4276 17.9012 18.4076 17.9076 18.375 17.9153C18.3065 17.9314 18.1938 17.9505 18.0075 17.9658C17.6076 17.9984 17.0731 18 16.2 18H4.8C3.92692 18 3.39239 17.9984 2.99247 17.9658C2.80617 17.9505 2.69345 17.9314 2.625 17.9153C2.59244 17.9076 2.57241 17.9012 2.56158 17.8973C2.55118 17.8936 2.54601 17.891 2.54601 17.891C2.35785 17.7951 2.20487 17.6422 2.10899 17.454C2.10899 17.454 2.10636 17.4488 2.10265 17.4384C2.09879 17.4276 2.09236 17.4076 2.08469 17.375C2.06857 17.3065 2.04945 17.1938 2.03423 17.0075C2.00156 16.6076 2 16.0731 2 15.2V9.75Z" fill="white"/></svg>
+      </div>
+    </div>
+    <div class="recap-card" onclick="openRecap()">
+      <div class="photos">
+        <div class="polaroid polaroid-2"><img src="assets/recap-photo-left.png" alt=""></div>
+        <div class="polaroid polaroid-3"><img src="assets/recap-photo-right.png" alt=""></div>
+        <div class="polaroid polaroid-1"><img src="assets/recap-photo-center.png" alt=""></div>
+      </div>
+      <span class="label">March Recap</span>
+    </div>
+  </div>
+
+  <!-- ===== Page 3: Recap Preview (single page, card crossfades A→B) ===== -->
+  <div class="page-recap slide-page" id="pageRecap">
+    <!-- Status Bar -->
+    <img class="status-bar-img" src="assets/shared/status-bar.png" alt="Status bar">
+
+    <!-- Nav bar -->
+    <div class="preview-nav">
+      <button class="nav-back" onclick="closeRecap()"><img src="assets/shared/back-arrow.svg" alt="Back"></button>
+      <span class="nav-pill">View all</span>
+      <div class="nav-right">
+        <div class="nav-icon"><img src="assets/shared/music-icon.svg" alt=""></div>
+        <div class="nav-icon"><img src="assets/shared/gear-icon.svg" alt=""></div>
+      </div>
+    </div>
+
+    <!-- Content Card (two layers) -->
+    <div class="recap-content-card">
+
+      <!-- State A: Loading -->
+      <div class="card-state card-loading">
+        <img class="card-bg" src="assets/pageA/card-bg.png" alt="">
+        <div class="loading-title">March Memory Recap</div>
+        <div class="loading-subtitle" id="typewriterText"></div>
+        <div class="recap-polaroid p-center" style="opacity:0">
+          <div class="polaroid-inner" style="background-image:url('assets/pageA/polaroid-texture.png'),linear-gradient(90deg,#fff,#fff);">
+            <div class="photo-frame"><img src="assets/pageA/photo3.png" alt=""></div>
+            <span class="polaroid-date">March 12 2026</span>
+          </div>
+        </div>
+        <div class="recap-polaroid p-left" style="opacity:0">
+          <div class="polaroid-inner" style="background-image:url('assets/pageA/polaroid-texture.png'),linear-gradient(90deg,#fff,#fff);">
+            <div class="photo-frame"><img src="assets/pageA/photo2.png" alt=""></div>
+            <span class="polaroid-date">March 1 2026</span>
+          </div>
+        </div>
+        <div class="recap-polaroid p-right" style="opacity:0">
+          <div class="polaroid-inner" style="background-image:url('assets/pageA/polaroid-texture.png'),linear-gradient(90deg,#fff,#fff);">
+            <div class="photo-frame"><img src="assets/pageA/photo1.png" alt=""></div>
+            <span class="polaroid-date">March 28 2026</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- State B: Result -->
+      <div class="card-state card-result">
+        <img class="card-bg" src="assets/pageB/card-bg.png" alt="">
+        <div class="result-header">
+          <span class="result-title">My March in Memories</span>
+          <div class="result-arrow"><img src="assets/pageB/arrow-icon.svg" alt=""></div>
+        </div>
+        <div class="result-headline">This month felt quiet, tender, and true.</div>
+        <div class="result-sticker1"><img src="assets/pageB/sticker1.png" alt=""></div>
+        <div class="result-emoji-kiss"><img src="assets/pageB/emoji-kiss.png" alt=""></div>
+        <div class="result-poem">Kisses from friends,<br>small silhouettes on<br>a quiet &nbsp;shore</div>
+        <div class="result-small-photo">
+          <div class="sp-inner">
+            <div class="sp-frame"><img src="assets/pageB/photo-small.png" alt=""></div>
+            <span class="sp-date">March 1 2026</span>
+          </div>
+        </div>
+        <div class="result-emoji-wave"><img src="assets/pageB/emoji-wave.png" alt=""></div>
+        <div class="result-text2">Tiny red berries hidden in deep green leaves.</div>
+        <div class="result-sticker-leaf"><img src="assets/pageB/sticker-leaf.png" alt=""></div>
+        <div class="result-leaf-small"><img src="assets/pageB/leaf-small.png" alt=""></div>
+      </div>
+
+    </div>
+
+    <!-- Action bar -->
+    <div class="action-bar">
+      <div class="action-item"><img src="assets/shared/edit-icon.svg" alt=""><span>Edit</span></div>
+      <div class="action-post"><img src="assets/shared/post-icon.svg" alt="Post"></div>
+      <div class="action-item">
+        <div class="story-avatar-btn">
+          <img class="av-ring" src="assets/shared/avatar-ring-small.svg" alt="">
+          <img class="av-photo" src="assets/shared/avatar-photo.png" alt="">
+          <img class="av-base" src="assets/shared/avatar-base-small.png" alt="">
+        </div>
+        <span>Your Story</span>
+      </div>
+    </div>
+    <div class="home-indicator"></div>
+  </div>
+
+</div>
+
+<script>
+  var guideTimer = null;
+  var typewriterTimer = null;
+  var transitionTimer = null;
+  var typewriterFullText = 'Generating month memory with a poem\u2026';
+
+  /* Page 2: Story Album */
+  function openStory() {
+    document.getElementById('pageStory').classList.add('active');
+    clearTimeout(guideTimer);
+    guideTimer = setTimeout(startGuideAnim, 2000);
+  }
+  function closeStory() {
+    document.getElementById('pageStory').classList.remove('active');
+    clearTimeout(guideTimer);
+    document.querySelector('.recap-card').classList.remove('animating');
+  }
+  function startGuideAnim() {
+    var card = document.querySelector('.recap-card');
+    card.classList.remove('animating');
+    void card.offsetHeight;
+    card.classList.add('animating');
+    card.addEventListener('animationend', function handler() {
+      card.classList.remove('animating');
+      card.removeEventListener('animationend', handler);
+    });
+  }
+
+  /* Page 3: Recap (single page with card crossfade) */
+  function openRecap() {
+    var page = document.getElementById('pageRecap');
+    // Reset to loading state
+    page.classList.remove('show-result');
+    page.classList.add('active');
+    // Reset typewriter
+    document.getElementById('typewriterText').innerHTML = '<span class="typewriter-cursor"></span>';
+    // Start typewriter after polaroids land
+    clearTimeout(typewriterTimer);
+    clearTimeout(transitionTimer);
+    typewriterTimer = setTimeout(function() { typeWriter(typewriterFullText, 0); }, 1200);
+    // Crossfade to result after loading finishes
+    transitionTimer = setTimeout(function() {
+      page.classList.add('show-result');
+    }, 5000);
+  }
+
+  function typeWriter(text, i) {
+    if (i > text.length) return;
+    var el = document.getElementById('typewriterText');
+    if (!el) return;
+    el.innerHTML = text.substring(0, i) + '<span class="typewriter-cursor"></span>';
+    typewriterTimer = setTimeout(function() { typeWriter(text, i + 1); }, 60);
+  }
+
+  function closeRecap() {
+    clearTimeout(typewriterTimer);
+    clearTimeout(transitionTimer);
+    var page = document.getElementById('pageRecap');
+    page.classList.remove('active');
+    page.classList.remove('show-result');
+  }
+</script>
+
+</body>
+</html>
